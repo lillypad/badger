@@ -6,7 +6,7 @@ The swiss army knife for windows exploit development.<br/>
 - Website: www.arcnetworksecurity.com
 - This application is designed to be the Swiss Army Knife of windows exploit development
 - Allowing exploit developers to think more about development than the repetitive tasks done everyday
-- To participate in this project email lilly@arcnetworksecurity.com
+- To participate in this project email lilly@arcnetworksecurity.com <br/>
 ---FEATURES TO COME---
 - SEH Detection and Enumeration
 - Mangled RVA Table Fix (some PE files don't have correct RVA Table Offset Flag i.e. user32.dll)
