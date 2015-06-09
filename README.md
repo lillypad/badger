@@ -1,16 +1,22 @@
 # badger
 The swiss army knife for windows exploit development.<br/>
 ---ABOUT---
-- Version: 1.0a
+- Version: 2.0
 - Made By: Arc Network Security
 - Website: www.arcnetworksecurity.com
 - This application is designed to be the Swiss Army Knife of windows exploit development
 - Allowing exploit developers to think more about development than the repetitive tasks done everyday
 - To participate in this project email lilly@arcnetworksecurity.com <br/>
+---WHAT's NEW--
+- Alpha-numeric shellcode reference chart
+- RVA Table Bug Fixed
+- Supports more than one command at a time
+- Major code overhaul and cleanup from alpha
+- Optional to list all functions with --list functionality
 ---FEATURES TO COME---
 - SEH Detection and Enumeration
-- Mangled RVA Table Fix (some PE files don't have correct RVA Table Offset Flag i.e. user32.dll)
-- Alpha-Numberic Shellcode Reference
+- ASLR dll entropy test
+- Security Cookie or Canary Enumeration
 - Suggestions are welcome
 
 Examples:
@@ -18,7 +24,9 @@ Examples:
 - badger --lib library.dll function
 - badger --enable-dep or --disable-dep
 - badger --enum library.dll
+- badger --enum library.dll --list
 - badger --about
+- badger --alphanum-ref
 Descriptions:
 - --aslr-check: Shows RSP and ESP to aid in discovering ASLR best run several times, if values change ASLR is enabled.
 - --lib: Shows the function actual address when loaded into memory ASLR may change this if enabled
