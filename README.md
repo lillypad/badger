@@ -7,7 +7,7 @@ The swiss army knife for windows exploit development.<br/>
 - This application is designed to be the Swiss Army Knife of windows exploit development
 - Allowing exploit developers to think more about development than the repetitive tasks done everyday
 - To participate in this project email lilly@arcnetworksecurity.com <br/>
----WHAT's NEW---<br/>
+---WHAT'S NEW---<br/>
 - Alpha-numeric shellcode reference chart
 - RVA Table Bug Fixed
 - Supports more than one command at a time
