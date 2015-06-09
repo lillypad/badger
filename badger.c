@@ -3,11 +3,31 @@
 //-BY: ARC NETWORK SECURITY-//
 //--------------------------//
 
-#include <windows.h>
+//Includes
 #include <stdio.h>
-#include <string.h>
+#include <windows.h>
+#include <libgen.h>
+#include "documentation.h"
 
-//Get File Size
+//Defines
+#define WINDOWS
+#ifdef WINDOWS
+#define MAX_PATH 260
+#endif
+#ifdef LINUX
+#define MAX_PATH 255
+#endif
+
+//Boolean Operations
+typedef int bool;
+#define true 1 
+#define false 0 
+
+
+void printAddress(char fileName[MAX_PATH], char functionName[MAX_PATH]){
+	printf("0x%x", GetProcAddress(LoadLibraryA(fileName), functionName));
+}
+
 int getFileSize(FILE *inputFile){
 	int fileSize;
 	fseek(inputFile, 0L, SEEK_END);
@@ -15,246 +35,350 @@ int getFileSize(FILE *inputFile){
 	return fileSize;
 }
 
-//Help Display
-void help(){
-	printf("Made by: Arc Network Security\n");
-	printf("Examples:\nbadger --aslr-check\nbadger --lib library.dll function\nbadger --enable-dep or --disable-dep\nbadger --enum library.dll\nbadger --about\n");
-	printf("Descriptions:\n");
-	printf("--aslr-check: Shows RSP and ESP to aid in discovering ASLR best run several times, if values change ASLR is enabled.\n");
-	printf("--lib: Shows the function actual address when loaded into memory ASLR may change this if enabled\n");
-	printf("--enable-dep and --disable--dep: Requires administrator command prompt and will allow to enable/disable DEP for troubleshooting.\n");
-	printf("--enum: This will give library headers and information including functions and actual addresses\n");
-	printf("--about: The about screen");
-}
-
-//About Display
-void about(){
-	printf("---ABOUT---\n");
-	printf("Version: 1.0a\n");
-	printf("Made By: Arc Network Security\n");
-	printf("Website: www.arcnetworksecurity.com\n");
-	printf("This application is designed to be the Swiss Army Knife of windows exploit development\n");
-	printf("Allowing exploit developers to think more about development than the repetitive tasks done everyday\n");
-	printf("To participate in this project email lilly@arcnetworksecurity.com\n");
-	printf("---FEATURES TO COME---\n");
-	printf("- SEH Detection and Enumeration\n");
-	printf("- Mangled RVA Table Fix (some PE files don't have correct RVA Table Offset Flag i.e. user32.dll)\n");
-	printf("- Alpha-Numberic Shellcode Reference\n");
-	printf("- Suggestions are welcome");
-}
-
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]){
+	
 	if (argc < 2){
-		printf("Not Enough Arguments.\n");
+		printf("ERROR: Not Enough Arguments.\n");
 		help();
 		return 1;
 	}
 	
-	//This is how help screens should be done in practice!
-	if ((strcmp(argv[1], "--help") == 0) || (strcmp(argv[1], "-h") == 0)) {
-		printf("---BADGER HELP---\n");
-		help();
-		return 0;
+	//Handler For Argument Order
+	int argEnum, argList, argASLRCheck, argEnableDep, argDisableDep, argLib, argHelp, argAbout, argAlphaRef;
+	bool boolList = false;
+	int c = 0;
+	for(c = 0; c <= argc-1; c++){
+		if(strcmp(argv[c], "--list") == 0){
+			boolList = true;
+			argList = c;
+		}
 	}
 	
-	if(strcmp(argv[1], "--about") == 0){
-		about();
-		return 0;
+	bool boolEnum = false;
+	c = 0;
+	for(c = 0; c <= argc-1; c++){
+		if(strcmp(argv[c], "--enum") == 0){
+			boolEnum = true;
+			argEnum = c;
+		}
+	}
+	
+	bool boolASLRCheck = false;
+	c = 0;
+	for(c = 0; c <= argc-1; c++){
+		if(strcmp(argv[c], "--aslr-check") == 0){
+			boolASLRCheck = true;
+			argASLRCheck = c;
+		}
+	}
+	
+	bool boolEnableDep = false;
+	c = 0;
+	for(c = 0; c <= argc-1; c++){
+		if(strcmp(argv[c], "--enable-dep") == 0){
+			boolEnableDep = true;
+			argEnableDep = c;
+		}
+	}
+	
+	bool boolDisableDep = false;
+	c = 0;
+	for(c = 0; c <= argc-1; c++){
+		if(strcmp(argv[c], "--disable-dep") == 0){
+			boolDisableDep = true;
+			argDisableDep = c;
+		}
+	}
+	
+	bool boolLib = false;
+	c = 0;
+	for(c = 0; c <= argc-1; c++){
+		if(strcmp(argv[c], "--lib") == 0){
+			boolLib = true;
+			argLib = c;
+		}
+	}
+	
+	bool boolHelp = false;
+	c = 0;
+	for(c = 0; c <= argc-1; c++){
+		if( (strcmp(argv[c], "--help") == 0) || (strcmp(argv[c], "-h") == 0) ){
+			boolHelp = true;
+			argHelp = c;
+		}
+	}
+	
+	bool boolAbout = false;
+	c = 0;
+	for(c = 0; c <= argc-1; c++){
+		if(strcmp(argv[c], "--about") == 0){
+			boolAbout = true;
+			argAbout = c;
+		}
+	}
+	
+	bool boolAlphaRef = false;
+	c = 0;
+	for(c = 0; c <= argc-1; c++){
+		if(strcmp(argv[c], "--alphanum-ref") == 0){
+			boolAlphaRef = true;
+			argAlphaRef = c;
+		}
+	}
+	//End Handler for Argument Order
+	
+	//Start Help
+	if(boolHelp == true){
+		if( (strcmp(argv[argHelp], "--help") == 0) || (strcmp(argv[argHelp], "-h") == 0) ){
+			help();
+			if(boolAbout == true || boolASLRCheck == true || boolDisableDep == true || boolEnableDep == true || boolEnum == true || boolList == true || boolLib == true || boolAlphaRef == true){
+				printf("\n");
+			}
+		}
+	}
+	//End Help
+	
+	//Start About
+	if(boolAbout == true){
+		if(strcmp(argv[argAbout], "--about") == 0){
+			about();
+			if(boolASLRCheck == true || boolDisableDep == true || boolEnableDep == true || boolEnum == true || boolList == true || boolLib == true || boolAlphaRef == true){
+				printf("\n");
+			}
+		}
+	}
+	//End About
+	
+	if(boolAlphaRef == true){
+		if(strcmp(argv[argAlphaRef], "--alphanum-ref") == 0){
+			alphaNumericRef();
+			if(boolASLRCheck == true || boolDisableDep == true || boolEnum == true || boolList == true || boolLib == true || boolEnableDep == true){
+				printf("\n");
+			}
+		}
 	}
 	
 	//Enable DEP Requires Administrator Rights
-	//Can also get DEP policy by doing GetSystemDEPPolicy(void);3
-	//IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE if set to 0x0040 ASLR is enabled for dll
-	//IMAGE_DLLCHARACTERISTICS_NX_COMPAT = 0x0100 and DEP is enabled for dll
-	if (strcmp(argv[1], "--enable-dep") == 0){
-		system("bcdedit.exe /set {current} nx AlwaysOn");
-		return 0;
+	if (boolEnableDep == true){
+		if (strcmp(argv[argEnableDep], "--enable-dep") == 0){
+			int stderror = system("bcdedit.exe /set {current} nx AlwaysOn");
+			if(stderror == 1){
+				printf("Please Run --enable-dep as Administrator.");
+			}
+			if(boolASLRCheck == true || boolDisableDep == true || boolEnum == true || boolList == true || boolLib == true){
+				printf("\n");
+			}
+		}
 	}
 	
 	//Disable DEP Requires Administrator Rights
-	if (strcmp(argv[1], "--disable-dep") == 0){
-		system("bcdedit.exe /set {current} nx AlwaysOff");
-		return 0;
-	}
-	
-	//A simple check for ASLR
-	if (strcmp(argv[1], "--aslr-check") == 0){
-		register int esp asm("esp");
-		register int rsp asm("rsp");
-		printf("Run Multiple Time if Changes ASLR is Enabled.\n");
-		printf("x86 ESP: 0x%x\n", esp);
-		printf("x64 RSP: 0x%x", rsp);
-		return 0;
-	}
-	
-	//Get Actual Address of DLL Function
-	if(strcmp(argv[1], "--lib") == 0){
-		unsigned int api_addr = 0;
-		if(argc < 3){
-			printf("Please include library file.");
-			return 1;
+	if (boolDisableDep == true){
+		if (strcmp(argv[argDisableDep], "--disable-dep") == 0){
+			int stderror = system("bcdedit.exe /set {current} nx AlwaysOff");
+			if(stderror == 1){
+				printf("Please Run --disable-dep as Administrator.");
+			}
+			if(boolASLRCheck == true || boolEnum == true || boolList == true || boolLib == true){
+				printf("\n");
+			}
 		}
-		if (GetProcAddress(LoadLibraryA(argv[2]), argv[3]) == 0){
-			printf("Please specify correct function name.");
-			return 1;
-		}
-		printf("Address: 0x%x", GetProcAddress(LoadLibraryA(argv[2]), argv[3]));
-		return 0;
 	}
 	
-	//Enumerate functions and display library header info
-	if (strcmp(argv[1], "--enum") == 0){
+	//ASLR Checker
+	if (boolASLRCheck == true){
+		if (strcmp(argv[argASLRCheck], "--aslr-check") == 0){
+			register int esp asm("esp");
+			register int rsp asm("rsp");
+			printf("Run Multiple Time if Changes ASLR is Enabled.\n");
+			printf("x86 ESP: 0x%x\n", esp);
+			printf("x64 RSP: 0x%x", rsp);
+			if(boolEnum == true || boolList == true || boolLib == true){
+				printf("\n");
+			}
+		}
+	}
+	//End ASLR Checker
+	
+	//Start Enumerate Specific Function with --lib
+	if (boolLib == true){
+		if(strcmp(argv[argLib], "--lib") == 0){
+			
+			unsigned int api_addr = 0;
+			if(argc <= argLib+1){
+				printf("Please include library file.");
+				return 1;
+			}
+			if (GetProcAddress(LoadLibraryA(argv[argLib+1]), argv[argLib+2]) == 0){
+				printf("Please specify correct function name.");
+				return 1;
+			}
+			unsigned char libFunctionName[MAX_PATH];
+			strcpy(libFunctionName, argv[argLib+2]);
+			printf("Function Name: %s\n", libFunctionName);
+			
+			printAddress(argv[argLib+1], argv[argLib+2]);
+			if(boolEnum == true || boolList == true){
+				printf("\n");
+			}
+			//return 0;
+		}
+	}
+	
+	//If --list is supplied without --enum
+	if(boolList == true && boolEnum == false){
+		printf("To use list you must use --enum as well.");
+	}
+	
+	//Start Variable Initialization
 	FILE *infile;
-	int fileSize;
-	unsigned char sbuff[1];
-	unsigned char cmpbuff[2];
-	unsigned char exptblBuffLE[3];
-	unsigned char exptblBuff[3];
+	long int i, j, k;
+	long int rvaBuffInt, rawdataPtrBuffInt, rvaOffset, exptblBuffInt, exptblInt, namervaBuffInt, namervaOffset, numFunctions, namesOffset;
+	long int fileSize;
+	unsigned char cmpPE[2];
+	unsigned char cmpTEXT[5];
+	unsigned char dllChar[2];
 	unsigned char actbaseBuff[3];
-	unsigned char namervaBuff[3];
 	unsigned char numfuncBuff[3];
-	long int numFuncInt;
-	long int i;
-	long int j;
-	long int k;
-	long int l;
-	cmpbuff[0] = 'P';
-	cmpbuff[1] = 'E';
+	unsigned char namervaBuff[3];
+	unsigned char exptblBuff[3];
+	unsigned char rvaBuff[3];
+	unsigned char rawdataPtrBuff[3];
+	unsigned char namesdllBuff[MAX_PATH];
+	unsigned char singleByte[1];
+	unsigned char functionName[MAX_PATH];
+	long int functNameInt = 0;
+	long int functCount = 0;
+	//End Variable Initialization
 	
-	infile = fopen(argv[2], "rb"); //Open file for reading
-	if (!infile){
-		printf("Unable to read or find file provided.");
-		return 1;
-	}
-	//Store file name and print
-	char fileName[MAX_PATH];
-	strcpy(fileName,argv[2]);
-	printf("File Name: %s\n", fileName);
-	//Print File Size
-	fileSize = getFileSize(infile);
-	printf("File Size: %d bytes\n", getFileSize(infile));
+	if (boolEnum == true){
 	
-	//Begin Searching for PE Flag
-	for (i = 0; i <= fileSize; i++){
-		fseek(infile, i, SEEK_SET);
-		fread(sbuff, sizeof(sbuff)+1,1, infile);
-		if (cmpbuff[0] == sbuff[0] && cmpbuff[1] == sbuff[1]){
-			printf("PE Header Flag: 0x%x\n", i);
-			printf("PE Header Offset: 0x%x\n", i+2); //+2 for length of PE flag
-			i = i + 52;
-			fseek(infile, i, SEEK_SET);
-			fread(actbaseBuff, sizeof(actbaseBuff)+1,1,infile);
-			printf("Preferred Base: 0x%02x%02x%02x%02x\n", actbaseBuff[3], actbaseBuff[2], actbaseBuff[1], actbaseBuff[0]);
-			i = i + 42; 
-			fseek(infile, i, SEEK_SET);
-			fread(sbuff, sizeof(sbuff)+1,1, infile);
-			printf("DLL Characteristics: 0x%02x%02x\n", sbuff[1], sbuff[0]);
-			if (sbuff[1] == '\x01'){
-				printf("DEP is Enabled\n");
+		if(strcmp(argv[argEnum], "--enum") == 0){
+			if(argc < 3){
+				printf("Please include library file.");
+				return 1;
 			}
-			else {
-				printf("DEP is Disabled\n");
+			infile = fopen(argv[argEnum+1], "rb");
+			if (!infile){
+				printf("Unable to read or find file provided.");
+				return 1;
 			}
-			if (sbuff[0] == '\x40'){
-				printf("ASLR is Enabled\n");
-			}
-			else {
-				printf("ASLR is Disabled\n");
-			}
-			//Find Export table or IMAGE_EXPORT_DIRECTORY
-			i = i + 24+2;
-			fseek(infile, i, SEEK_SET);
-			fread(exptblBuffLE, sizeof(exptblBuffLE)+1, 1, infile);
-			printf("Export Table Offset: 0x%02x%02x%02x%02x\n", exptblBuffLE[3], exptblBuffLE[2], exptblBuffLE[1], exptblBuffLE[0]);
-			//Convert exptblBuffLE to non little endian format move to for loop eventually
-			exptblBuff[0] = exptblBuffLE[3];
-			exptblBuff[1] = exptblBuffLE[2]; 
-			exptblBuff[2] = exptblBuffLE[1];
-			exptblBuff[3] = exptblBuffLE[0];
-			i = 0;
-			i += exptblBuffLE[0] | (exptblBuffLE[1]<<8) | (exptblBuffLE[2]<<16) | (exptblBuffLE[3]<<24);
-			//printf("Offset to Table: %d\n", i);
-			i = i + 12;
-			fseek(infile, i, SEEK_SET);
-			fread(namervaBuff, sizeof(namervaBuff)+1, 1, infile);
-			printf("Name RVA Offset: 0x%02x%02x%02x%02x\n", namervaBuff[3], namervaBuff[2], namervaBuff[1], namervaBuff[0]);
-			//Here we will find Number of Functions +8 should do it!
-			i = i + 8;
-			fseek(infile, i, SEEK_SET);
-			fread(numfuncBuff, sizeof(numfuncBuff)+1, 1, infile);
-			numFuncInt = 0;
-			numFuncInt += numfuncBuff[0] | (numfuncBuff[1]<<8) | (numfuncBuff[2]<<16) | (numfuncBuff[3]<<24); //Convert edian to int
-			printf("Number of functions: %d\n", numFuncInt);
-			//End number of Functions
-			i = 0;
-			i += namervaBuff[0] | (namervaBuff[1]<<8) | (namervaBuff[2]<<16) | (namervaBuff[3]<<24);
-			//Some PE files don't have pointer header to name rva table like user32.dll... will have to brute force based on filename
-			fseek(infile, i, SEEK_SET);
-			unsigned char filenameBuff[MAX_PATH];
-			unsigned char dotdllBuff[3];
-			dotdllBuff[0] = '.';
-			dotdllBuff[1] = 'd';
-			dotdllBuff[2] = 'l';
-			dotdllBuff[3] = 'l';
-			int foundDll = 0;
-			fread(filenameBuff, sizeof(filenameBuff)+1, 1, infile);
-			//printf("filenameBuff: %s\n", filenameBuff);
-			for (j = 0; j <= MAX_PATH; j++){
-				//Get .dll
-				if (dotdllBuff[1] == filenameBuff[j] && dotdllBuff[2] == filenameBuff[j+1] && dotdllBuff[3] == filenameBuff[j+2]){
-					printf("Function Name Offset: 0x%x\n", j+4+i);
-					foundDll = 1;
-					//Start enumerating functions
-					
-					long int difference = i+j+4;
-					unsigned char nullByte = '\x00';
-					unsigned char singleByte[1];
-					unsigned char functionName[MAX_PATH];
-					long int functNameInt = 0;
-					long int functCount = 0;
-					printf("---ENUMERATED FUNCTIONS---\n");
-					printf("Act Addr:  Function Name:\n");
-					//Offset 756820
-					for (k = difference; k <= fileSize; k++){
-						fseek(infile, k, SEEK_SET);
-						fread(singleByte, sizeof(singleByte)+1, 1, infile);
-						
-						//printf("%02x%02x\n", singleByte[0], singleByte[1]);
-						functionName[functNameInt] = singleByte[0];
-						functNameInt++;
-						
-						if (singleByte[0] == '\x00'){
-							//unsigned int api_addr = 0;
-							//api_addr = GetProcAddress(LoadLibraryA(argv[1]),functionName);
-							//printf("Address: 0x%x", api_addr);
-							printf("0x%x %s\n", GetProcAddress(LoadLibraryA(argv[2]),functionName), functionName);
-							functNameInt = 0;
-							functCount++;
-							if (functCount == numFuncInt){
-								//system("pause");
-								printf("---END ENUMERATED FUNCTIONS---");
-								break;
-							}
-						}
+			char fileName[MAX_PATH];
+			char filePath[MAX_PATH];
+			strcpy(filePath, argv[argEnum+1]);
+			strcpy(fileName, basename(argv[argEnum+1]));
+			printf("File Name: %s\n", fileName);
+			printf("File Path: %s\n", filePath);
+			fileSize = getFileSize(infile);
+			printf("File Size: %d bytes\n", fileSize);
+			for(i = 0; i <= fileSize; i++){
+				fseek(infile, i, SEEK_SET);
+				fread(cmpPE, sizeof(cmpPE)+1, 1, infile);
+				if (cmpPE[0] == 'P' && cmpPE[1] == 'E'){
+					printf("PE Header Offset: 0x%x\n", i);
+					i = i + 52;
+					fseek(infile, i, SEEK_SET);
+					fread(actbaseBuff, sizeof(actbaseBuff)+1, 1,infile);
+					printf("Preferred Base: 0x%02x%02x%02x%02x\n", actbaseBuff[3], actbaseBuff[2], actbaseBuff[1], actbaseBuff[0]);
+					i = i + 42;
+					fseek(infile, i, SEEK_SET);
+					fread(dllChar, sizeof(dllChar)+1, 1, infile);
+					printf("DLL Characteristics: 0x%02x%02x\n", dllChar[1], dllChar[0]);
+					if (dllChar[1] == '\x01'){
+						printf("DEP is Enabled\n");
 					}
-					
-					//End enumerating functions
+					else {
+						printf("DEP is Disabled\n");
+					}
+					if (dllChar[0] == '\x40'){
+						printf("ASLR is Enabled (Virtual Address may Change on Load)\n");
+					}
+					else {
+						printf("ASLR is Disabled\n");
+					}
+					i = i + 24+2;
+					fseek(infile, i, SEEK_SET);
+					fread(exptblBuff, sizeof(exptblBuff)+1, 1, infile);
+					exptblBuffInt = exptblBuff[0] | (exptblBuff[1]<<8) | (exptblBuff[2]<<16) | (exptblBuff[3]<<24);
+					printf("Export Table RVA: 0x%02x%02x%02x%02x\n", exptblBuff[3], exptblBuff[2], exptblBuff[1], exptblBuff[0]);
 					break;
 				}
-				if (j == MAX_PATH && foundDll == 0){
-					printf("Brute force feature not available yet\n");
-					printf("Name RVA Offset Missing... start enumerating functions with brute force...");
+			}
+
+			for(i = 0; i <= fileSize; i++){
+				fseek(infile, i, SEEK_SET);
+				fread(cmpTEXT, sizeof(cmpTEXT)+1, 1, infile);
+				if(cmpTEXT[0] == '.' && cmpTEXT[1] == 't' && cmpTEXT[2] == 'e' && cmpTEXT[3] == 'x' && cmpTEXT[4] == 't'){
+					printf(".text Offset: 0x%x\n", i);
+					i = i + 12;
+					fseek(infile, i, SEEK_SET);
+					fread(rvaBuff, sizeof(rvaBuff)+1, 1, infile);
+					rvaBuffInt = rvaBuff[0] | (rvaBuff[1]<<8) | (rvaBuff[2]<<16) | (rvaBuff[3]<<24);
+					printf("RVA: 0x%02x%02x%02x%02x\n", rvaBuff[3], rvaBuff[2], rvaBuff[1], rvaBuff[0]);
+					i = i + 8;
+					fseek(infile, i, SEEK_SET);
+					fread(rawdataPtrBuff, sizeof(rawdataPtrBuff)+1, 1, infile);
+					rawdataPtrBuffInt = rawdataPtrBuff[0] | (rawdataPtrBuff[1]<<8) | (rawdataPtrBuff[2]<<16) | (rawdataPtrBuff[3]<<24);
+					printf("Raw Data Offset: 0x%02x%02x%02x%02x\n", rawdataPtrBuff[3], rawdataPtrBuff[2], rawdataPtrBuff[1], rawdataPtrBuff[0]);
+					rvaOffset = rvaBuffInt - rawdataPtrBuffInt;
+					printf("RVA vs RAW: 0x%x\n", rvaOffset);
+					exptblInt = exptblBuffInt - rvaOffset;
+					printf("Export Table Offset: 0x%x\n", exptblInt);
+					i = exptblInt + 12;
+					fseek(infile, i, SEEK_SET);
+					fread(namervaBuff, sizeof(namervaBuff)+1, 1, infile);
+					namervaBuffInt = namervaBuff[0] | (namervaBuff[1]<<8) | (namervaBuff[2]<<16) | (namervaBuff[3]<<24);
+					printf("Name RVA Offset: 0x%02x%02x%02x%02x\n", namervaBuff[3], namervaBuff[2], namervaBuff[1], namervaBuff[0]);
+					namervaOffset = namervaBuffInt - rvaOffset;
+					printf("Names Header Offset: 0x%x\n", namervaOffset);
+					i = i + 8+4;
+					fseek(infile, i, SEEK_SET);
+					fread(numfuncBuff, sizeof(numfuncBuff)+1, 1, infile);
+					numFunctions = numfuncBuff[0] | (numfuncBuff[1]<<8) | (numfuncBuff[2]<<16) | (numfuncBuff[3]<<24);
+					printf("Number of Functions: %d\n", numFunctions);
+					break;
 				}
 			}
-			break;
+		
+			fseek(infile, namervaOffset, SEEK_SET);
+			fread(namesdllBuff, sizeof(namesdllBuff)+1, 1, infile);
+			printf("Names Header: %s\n", namesdllBuff);
+			for(i = 0; i <= MAX_PATH; i++){
+				if(namesdllBuff[i] == '.' && namesdllBuff[i+1] == 'd' && namesdllBuff[i+2] == 'l' && namesdllBuff[i+3] == 'l'){
+					namesOffset = i + namervaOffset + 4;
+					printf("Names Offset: 0x%x", namesOffset);
+					break;
+				}
+			}	
 		}
 	}
-	fclose(infile);
+	
+	if(boolList == true && boolEnum == true){
+		printf("\n");
+		for(i = namesOffset+1; i <= fileSize; i++){
+			if(i == namesOffset+1){
+				printf("---ENUMERATED FUNCTIONS---\n");
+				printf("VA:        Function Name:\n");
+				//printf("Act Addr:  Function Name:\n");
+			}
+			fseek(infile, i, SEEK_SET);
+			fread(singleByte, sizeof(singleByte)+1, 1, infile);
+			functionName[functNameInt] = singleByte[0];
+			functNameInt++;
+			if (singleByte[0] == '\x00'){
+				printAddress(argv[argEnum+1], functionName);
+				printf(" %s\n", functionName);
+				functNameInt = 0;
+				functCount++;
+				if (functCount == numFunctions){
+					printf("---END ENUMERATED FUNCTIONS---");
+					break;
+				}
+			}
+		}
 	}
-	else {
-		printf("Unknown Error\n");
-		help(); 
-		return 1;
+	
+	if(boolEnum == true){
+		fclose(infile);
 	}
-		
+	return 0;
 }
