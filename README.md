@@ -12,7 +12,7 @@ The swiss army knife for windows exploit development.<br/>
 - RVA Table Bug Fixed
 - Supports more than one command at a time
 - Major code overhaul and cleanup from alpha
-- Optional to list all functions with --list functionality
+- Optional to list all functions with --list functionality<br/>
 ---FEATURES TO COME---
 - SEH Detection and Enumeration
 - ASLR dll entropy test
