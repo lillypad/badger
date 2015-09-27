@@ -1,13 +1,13 @@
 # badger
 The swiss army knife for windows exploit development.<br/>
 ---ABOUT---
-Version: 2.1
-Made By: Arc Network Security
-Website: www.arcnetworksecurity.com
-This application is designed to be the Swiss Army Knife of Windows exploit development
-Allowing exploit developers to think more about development than the repetitive tasks done everyday
-To participate in this project email lilly@arcnetworksecurity.com
-IMPORTANT: By using this application you indemnify and hold harmless Arc Network Security\nfor any unethical application or misuse of this software
+Version: 2.1<br/>
+Made By: Arc Network Security<br/>
+Website: www.arcnetworksecurity.com<br/>
+This application is designed to be the Swiss Army Knife of Windows exploit development<br/>
+Allowing exploit developers to think more about development than the repetitive tasks done everyday<br/>
+To participate in this project email lilly@arcnetworksecurity.com<br/>
+IMPORTANT: By using this application you indemnify and hold harmless Arc Network Security\nfor any unethical application or misuse of this software<br/>
 ---WHAT'S NEW---
 - Only Supports IMAGE_EXPORT_DIRECTORY in .text Fixed
 - Now supports more than one command at a time
