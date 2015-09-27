@@ -11,7 +11,7 @@ IMPORTANT: By using this application you indemnify and hold harmless Arc Network
 ---WHAT'S NEW---
 - Only Supports IMAGE_EXPORT_DIRECTORY in .text Fixed
 - Now supports more than one command at a time
-- Major code clean up and overhaul from alpha version
+- Major code clean up and overhaul from alpha version<br/>
 ---FEATURES TO COME---
 - Security Cookie or Canary Enumeration
 - ASLR dll Entropy Test
