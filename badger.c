@@ -235,7 +235,7 @@ int main(int argc, char *argv[]){
 	long int rvaBuffInt, rawdataPtrBuffInt, rvaOffset, exptblBuffInt, exptblInt, namervaBuffInt, namervaOffset, numFunctions, namesOffset;
 	long int fileSize;
 	unsigned char cmpPE[2];
-	unsigned char cmpTEXT[5];
+	unsigned char cmpBUFF[16];
 	unsigned char dllChar[2];
 	unsigned char actbaseBuff[3];
 	unsigned char numfuncBuff[3];
@@ -248,6 +248,19 @@ int main(int argc, char *argv[]){
 	unsigned char functionName[MAX_PATH];
 	long int functNameInt = 0;
 	long int functCount = 0;
+	
+	bool namestblBOOL = false;
+	int numSections = 0;
+	int totalSections;
+	long int rvaINT, rawdataINT, rvaOFFSET, exptblINT, rvavsrawINT, namervaINT, textOFFSET, dataOFFSET, rdataOFFSET, bssOFFSET, edataOFFSET, idataOFFSET, crtOFFSET, tlsOFFSET, rsrcOFFSET, relocOFFSET, namestblINT, namestblOFFSET;
+	unsigned char numSectionsBUFF[1];
+	unsigned char rvaBUFF[3];
+	unsigned char rawdataBUFF[3];
+	unsigned char exptblBUFF[3];
+	unsigned char namervatblBUFF[3];
+	unsigned char namestblBUFF[3];
+	unsigned char dllBUFF[MAX_PATH];
+	
 	//End Variable Initialization
 	
 	if (boolEnum == true){
@@ -270,6 +283,8 @@ int main(int argc, char *argv[]){
 			printf("File Path: %s\n", filePath);
 			fileSize = getFileSize(infile);
 			printf("File Size: %d bytes\n", fileSize);
+			
+			//File data before sections
 			for(i = 0; i <= fileSize; i++){
 				fseek(infile, i, SEEK_SET);
 				fread(cmpPE, sizeof(cmpPE)+1, 1, infile);
@@ -303,49 +318,530 @@ int main(int argc, char *argv[]){
 					break;
 				}
 			}
-
+			
+			//Section Enumeration
 			for(i = 0; i <= fileSize; i++){
 				fseek(infile, i, SEEK_SET);
-				fread(cmpTEXT, sizeof(cmpTEXT)+1, 1, infile);
-				if(cmpTEXT[0] == '.' && cmpTEXT[1] == 't' && cmpTEXT[2] == 'e' && cmpTEXT[3] == 'x' && cmpTEXT[4] == 't'){
-					printf(".text Offset: 0x%x\n", i);
+				fread(cmpBUFF, sizeof(cmpBUFF)+1, 1, infile);
+				
+				if(cmpBUFF[0] == 'P' && cmpBUFF[1] == 'E'){
+					printf("PE Offset: 0x%x\n", i);
+					i = i + 6;
+					fseek(infile, i, SEEK_SET);
+					fread(numSectionsBUFF, sizeof(numSectionsBUFF)+1, 1,infile);
+					totalSections = numSectionsBUFF[0] | (numSectionsBUFF[1]<<8);
+					printf("Number of Sections: %d\n", totalSections);
+					i = i + 114;
+					fseek(infile, i, SEEK_SET);
+					fread(exptblBUFF, sizeof(exptblBUFF)+1, 1, infile);
+					exptblINT = exptblBUFF[0] | (exptblBUFF[1]<<8) | (exptblBUFF[2]<<16) | (exptblBUFF[3]<<24);
+					printf("Export Table RVA: 0x%02x%02x%02x%02x\n", exptblBUFF[3], exptblBUFF[2], exptblBUFF[1], exptblBUFF[0]);
+				}
+				
+				//.text
+				if (cmpBUFF[0] == '.' && cmpBUFF[1] == 't' && cmpBUFF[2] == 'e' && cmpBUFF[3] == 'x' && cmpBUFF[4] == 't'){
+					numSections++;
+					textOFFSET = i;
+					printf(".text offset: 0x%x\n", i);
 					i = i + 12;
 					fseek(infile, i, SEEK_SET);
-					fread(rvaBuff, sizeof(rvaBuff)+1, 1, infile);
-					rvaBuffInt = rvaBuff[0] | (rvaBuff[1]<<8) | (rvaBuff[2]<<16) | (rvaBuff[3]<<24);
-					printf("RVA: 0x%02x%02x%02x%02x\n", rvaBuff[3], rvaBuff[2], rvaBuff[1], rvaBuff[0]);
+					fread(rvaBUFF, sizeof(rvaBUFF)+1, 1,infile);
+					rvaINT = rvaBUFF[0] | (rvaBUFF[1]<<8) | (rvaBUFF[2]<<16) | (rvaBUFF[3]<<24);
+					printf("RVA: 0x%02x%02x%02x%02x\n", rvaBUFF[3], rvaBUFF[2], rvaBUFF[1], rvaBUFF[0]);
 					i = i + 8;
 					fseek(infile, i, SEEK_SET);
-					fread(rawdataPtrBuff, sizeof(rawdataPtrBuff)+1, 1, infile);
-					rawdataPtrBuffInt = rawdataPtrBuff[0] | (rawdataPtrBuff[1]<<8) | (rawdataPtrBuff[2]<<16) | (rawdataPtrBuff[3]<<24);
-					printf("Raw Data Offset: 0x%02x%02x%02x%02x\n", rawdataPtrBuff[3], rawdataPtrBuff[2], rawdataPtrBuff[1], rawdataPtrBuff[0]);
-					rvaOffset = rvaBuffInt - rawdataPtrBuffInt;
-					printf("RVA vs RAW: 0x%x\n", rvaOffset);
-					exptblInt = exptblBuffInt - rvaOffset;
-					printf("Export Table Offset: 0x%x\n", exptblInt);
-					i = exptblInt + 12;
+					fread(rawdataBUFF, sizeof(rawdataBUFF)+1, 1,infile);
+					rawdataINT = rawdataBUFF[0] | (rawdataBUFF[1]<<8) | (rawdataBUFF[2]<<16) | (rawdataBUFF[3]<<24);
+					printf("Raw Data Ptr: 0x%02x%02x%02x%02x\n", rawdataBUFF[3], rawdataBUFF[2], rawdataBUFF[1], rawdataBUFF[0]);
+					rvaOFFSET = rvaINT - rawdataINT;
+					printf("RVA vs RAW: 0x%x\n", rvaOFFSET);
+					rvavsrawINT = exptblINT - rvaOFFSET;
+					i = rvavsrawINT + 12;
 					fseek(infile, i, SEEK_SET);
-					fread(namervaBuff, sizeof(namervaBuff)+1, 1, infile);
-					namervaBuffInt = namervaBuff[0] | (namervaBuff[1]<<8) | (namervaBuff[2]<<16) | (namervaBuff[3]<<24);
-					printf("Name RVA Offset: 0x%02x%02x%02x%02x\n", namervaBuff[3], namervaBuff[2], namervaBuff[1], namervaBuff[0]);
-					namervaOffset = namervaBuffInt - rvaOffset;
-					printf("Names Header Offset: 0x%x\n", namervaOffset);
-					i = i + 8+4;
+					fread(namervatblBUFF, sizeof(namervatblBUFF)+1, 1,infile);
+					namervaINT = namervatblBUFF[0] | (namervatblBUFF[1]<<8) | (namervatblBUFF[2]<<16) | (namervatblBUFF[3]<<24);
+					namestblINT = namervaINT - rvaOFFSET;
+					if(namestblINT < 0 || namestblINT > fileSize){
+					}
+					else{
+						//Find .dll
+						j = namestblINT;
+						fseek(infile, j, SEEK_SET);
+						fread(dllBUFF, sizeof(dllBUFF)+1, 1, infile); //Read buffer
+						for(j = 0; j <= MAX_PATH; j++){
+							if(dllBUFF[j] == '.' && dllBUFF[j+1] == 'd' && dllBUFF[j+2] == 'l' && dllBUFF[j+3] == 'l'){
+								namestblOFFSET = j+namestblINT+4;
+								namestblBOOL = true;
+								i = rvavsrawINT + 12;
+								i = i + 8+4;
+								fseek(infile, i, SEEK_SET);
+								fread(numfuncBuff, sizeof(numfuncBuff)+1, 1, infile);
+								numFunctions = numfuncBuff[0] | (numfuncBuff[1]<<8) | (numfuncBuff[2]<<16) | (numfuncBuff[3]<<24);
+								printf("Number of Functions: %d\n", numFunctions);
+								break;
+							}
+						}
+					}
+					i = textOFFSET + 32;
 					fseek(infile, i, SEEK_SET);
-					fread(numfuncBuff, sizeof(numfuncBuff)+1, 1, infile);
-					numFunctions = numfuncBuff[0] | (numfuncBuff[1]<<8) | (numfuncBuff[2]<<16) | (numfuncBuff[3]<<24);
-					printf("Number of Functions: %d\n", numFunctions);
+				}
+				
+				//.data
+				if (cmpBUFF[0] == '.' && cmpBUFF[1] == 'd' && cmpBUFF[2] == 'a' && cmpBUFF[3] == 't' && cmpBUFF[4] == 'a'){
+					numSections++;
+					dataOFFSET = i;
+					printf(".data offset: 0x%x\n", i);
+					i = i + 12;
+					fseek(infile, i, SEEK_SET);
+					fread(rvaBUFF, sizeof(rvaBUFF)+1, 1,infile);
+					rvaINT = rvaBUFF[0] | (rvaBUFF[1]<<8) | (rvaBUFF[2]<<16) | (rvaBUFF[3]<<24);
+					printf("RVA: 0x%02x%02x%02x%02x\n", rvaBUFF[3], rvaBUFF[2], rvaBUFF[1], rvaBUFF[0]);
+					i = i + 8;
+					fseek(infile, i, SEEK_SET);
+					fread(rawdataBUFF, sizeof(rawdataBUFF)+1, 1,infile);
+					rawdataINT = rawdataBUFF[0] | (rawdataBUFF[1]<<8) | (rawdataBUFF[2]<<16) | (rawdataBUFF[3]<<24);
+					printf("Raw Data Ptr: 0x%02x%02x%02x%02x\n", rawdataBUFF[3], rawdataBUFF[2], rawdataBUFF[1], rawdataBUFF[0]);
+					rvaOFFSET = rvaINT - rawdataINT;
+					printf("RVA vs RAW: 0x%x\n", rvaOFFSET);
+					rvavsrawINT = exptblINT - rvaOFFSET;
+					i = rvavsrawINT +  12;
+					fseek(infile, i, SEEK_SET);
+					fread(namervatblBUFF, sizeof(namervatblBUFF)+1, 1,infile);
+					namervaINT = namervatblBUFF[0] | (namervatblBUFF[1]<<8) | (namervatblBUFF[2]<<16) | (namervatblBUFF[3]<<24);
+					namestblINT = namervaINT - rvaOFFSET;
+					if(namestblINT < 0 || namestblINT > fileSize){
+					}
+					else{
+						//Find .dll
+						j = namestblINT;
+						fseek(infile, j, SEEK_SET);
+						fread(dllBUFF, sizeof(dllBUFF)+1, 1, infile); //Read buffer
+						for(j = 0; j <= MAX_PATH; j++){
+							if(dllBUFF[j] == '.' && dllBUFF[j+1] == 'd' && dllBUFF[j+2] == 'l' && dllBUFF[j+3] == 'l'){
+								namestblOFFSET = j+namestblINT+4;
+								namestblBOOL = true;
+								i = rvavsrawINT + 12;
+								i = i + 8+4;
+								fseek(infile, i, SEEK_SET);
+								fread(numfuncBuff, sizeof(numfuncBuff)+1, 1, infile);
+								numFunctions = numfuncBuff[0] | (numfuncBuff[1]<<8) | (numfuncBuff[2]<<16) | (numfuncBuff[3]<<24);
+								printf("Number of Functions: %d\n", numFunctions);
+								break;
+							}
+						}
+					}
+						i = dataOFFSET + 32;
+						fseek(infile, i, SEEK_SET);
+				}
+				
+				//.rdata
+				if (cmpBUFF[0] == '.' && cmpBUFF[1] == 'r' && cmpBUFF[2] == 'd' && cmpBUFF[3] == 'a' && cmpBUFF[4] == 't' && cmpBUFF[5] == 'a'){
+					numSections++;
+					rdataOFFSET = i;
+					printf(".rdata offset: 0x%x\n", i);
+					i = i + 12;
+					fseek(infile, i, SEEK_SET);
+					fread(rvaBUFF, sizeof(rvaBUFF)+1, 1,infile);
+					rvaINT = rvaBUFF[0] | (rvaBUFF[1]<<8) | (rvaBUFF[2]<<16) | (rvaBUFF[3]<<24);
+					printf("RVA: 0x%02x%02x%02x%02x\n", rvaBUFF[3], rvaBUFF[2], rvaBUFF[1], rvaBUFF[0]);
+					i = i + 8;
+					fseek(infile, i, SEEK_SET);
+					fread(rawdataBUFF, sizeof(rawdataBUFF)+1, 1,infile);
+					rawdataINT = rawdataBUFF[0] | (rawdataBUFF[1]<<8) | (rawdataBUFF[2]<<16) | (rawdataBUFF[3]<<24);
+					printf("Raw Data Ptr: 0x%02x%02x%02x%02x\n", rawdataBUFF[3], rawdataBUFF[2], rawdataBUFF[1], rawdataBUFF[0]);
+					rvaOFFSET = rvaINT - rawdataINT;
+					printf("RVA vs RAW: 0x%x\n", rvaOFFSET);
+					rvavsrawINT = exptblINT - rvaOFFSET;
+					i = rvavsrawINT +  12;
+					fseek(infile, i, SEEK_SET);
+					fread(namervatblBUFF, sizeof(namervatblBUFF)+1, 1,infile);
+					namervaINT = namervatblBUFF[0] | (namervatblBUFF[1]<<8) | (namervatblBUFF[2]<<16) | (namervatblBUFF[3]<<24);
+					namestblINT = namervaINT - rvaOFFSET;
+					if(namestblINT < 0 || namestblINT > fileSize){
+					}
+					else{
+						//Find .dll
+						j = namestblINT;
+						fseek(infile, j, SEEK_SET);
+						fread(dllBUFF, sizeof(dllBUFF)+1, 1, infile); //Read buffer
+						for(j = 0; j <= MAX_PATH; j++){
+							if(dllBUFF[j] == '.' && dllBUFF[j+1] == 'd' && dllBUFF[j+2] == 'l' && dllBUFF[j+3] == 'l'){
+								namestblOFFSET = j+namestblINT+4;
+								namestblBOOL = true;
+								i = rvavsrawINT + 12;
+								i = i + 8+4;
+								fseek(infile, i, SEEK_SET);
+								fread(numfuncBuff, sizeof(numfuncBuff)+1, 1, infile);
+								numFunctions = numfuncBuff[0] | (numfuncBuff[1]<<8) | (numfuncBuff[2]<<16) | (numfuncBuff[3]<<24);
+								printf("Number of Functions: %d\n", numFunctions);
+								break;
+							}
+						}
+					}
+					i = rdataOFFSET + 32;
+					fseek(infile, i, SEEK_SET);
+				}
+				
+				//.bss
+				if (cmpBUFF[0] == '.' && cmpBUFF[1] == 'b' && cmpBUFF[2] == 's' && cmpBUFF[3] == 's'){
+					numSections++;
+					bssOFFSET = i;
+					printf(".bss offset: 0x%x\n", i);
+					i = i + 12;
+					fseek(infile, i, SEEK_SET);
+					fread(rvaBUFF, sizeof(rvaBUFF)+1, 1,infile);
+					rvaINT = rvaBUFF[0] | (rvaBUFF[1]<<8) | (rvaBUFF[2]<<16) | (rvaBUFF[3]<<24);
+					printf("RVA: 0x%02x%02x%02x%02x\n", rvaBUFF[3], rvaBUFF[2], rvaBUFF[1], rvaBUFF[0]);
+					i = i + 8;
+					fseek(infile, i, SEEK_SET);
+					fread(rawdataBUFF, sizeof(rawdataBUFF)+1, 1,infile);
+					rawdataINT = rawdataBUFF[0] | (rawdataBUFF[1]<<8) | (rawdataBUFF[2]<<16) | (rawdataBUFF[3]<<24);
+					printf("Raw Data Ptr: 0x%02x%02x%02x%02x\n", rawdataBUFF[3], rawdataBUFF[2], rawdataBUFF[1], rawdataBUFF[0]);
+					rvaOFFSET = rvaINT - rawdataINT;
+					printf("RVA vs RAW: 0x%x\n", rvaOFFSET);
+					rvavsrawINT = exptblINT - rvaOFFSET;
+					i = rvavsrawINT +  12;
+					fseek(infile, i, SEEK_SET);
+					fread(namervatblBUFF, sizeof(namervatblBUFF)+1, 1,infile);
+					namervaINT = namervatblBUFF[0] | (namervatblBUFF[1]<<8) | (namervatblBUFF[2]<<16) | (namervatblBUFF[3]<<24);
+					namestblINT = namervaINT - rvaOFFSET;
+					if(namestblINT < 0 || namestblINT > fileSize){
+					}
+					else{
+						//Find .dll
+						j = namestblINT;
+						fseek(infile, j, SEEK_SET);
+						fread(dllBUFF, sizeof(dllBUFF)+1, 1, infile); //Read buffer
+						for(j = 0; j <= MAX_PATH; j++){
+							if(dllBUFF[j] == '.' && dllBUFF[j+1] == 'd' && dllBUFF[j+2] == 'l' && dllBUFF[j+3] == 'l'){
+								namestblOFFSET = j+namestblINT+4;
+								namestblBOOL = true;
+								i = rvavsrawINT + 12;
+								i = i + 8+4;
+								fseek(infile, i, SEEK_SET);
+								fread(numfuncBuff, sizeof(numfuncBuff)+1, 1, infile);
+								numFunctions = numfuncBuff[0] | (numfuncBuff[1]<<8) | (numfuncBuff[2]<<16) | (numfuncBuff[3]<<24);
+								printf("Number of Functions: %d\n", numFunctions);
+								break;
+							}
+						}
+					}
+						i = bssOFFSET + 32;
+						fseek(infile, i, SEEK_SET);
+				}
+				
+				//.edata
+				if (cmpBUFF[0] == '.' && cmpBUFF[1] == 'e' && cmpBUFF[2] == 'd' && cmpBUFF[3] == 'a' && cmpBUFF[4] == 't' && cmpBUFF[5] == 'a'){
+					numSections++;
+					edataOFFSET = i;
+					printf(".edata offset: 0x%x\n", i);
+					i = i + 12;
+					fseek(infile, i, SEEK_SET);
+					fread(rvaBUFF, sizeof(rvaBUFF)+1, 1,infile);
+					rvaINT = rvaBUFF[0] | (rvaBUFF[1]<<8) | (rvaBUFF[2]<<16) | (rvaBUFF[3]<<24);
+					printf("RVA: 0x%02x%02x%02x%02x\n", rvaBUFF[3], rvaBUFF[2], rvaBUFF[1], rvaBUFF[0]);
+					i = i + 8;
+					fseek(infile, i, SEEK_SET);
+					fread(rawdataBUFF, sizeof(rawdataBUFF)+1, 1,infile);
+					rawdataINT = rawdataBUFF[0] | (rawdataBUFF[1]<<8) | (rawdataBUFF[2]<<16) | (rawdataBUFF[3]<<24);
+					printf("Raw Data Ptr: 0x%02x%02x%02x%02x\n", rawdataBUFF[3], rawdataBUFF[2], rawdataBUFF[1], rawdataBUFF[0]);
+					rvaOFFSET = rvaINT - rawdataINT;
+					printf("RVA vs RAW: 0x%x\n", rvaOFFSET);
+					rvavsrawINT = exptblINT - rvaOFFSET;
+					i = rvavsrawINT +  12;
+					fseek(infile, i, SEEK_SET);
+					fread(namervatblBUFF, sizeof(namervatblBUFF)+1, 1,infile);
+					namervaINT = namervatblBUFF[0] | (namervatblBUFF[1]<<8) | (namervatblBUFF[2]<<16) | (namervatblBUFF[3]<<24);
+					namestblINT = namervaINT - rvaOFFSET;
+					if(namestblINT < 0 || namestblINT > fileSize){
+					}
+					else{
+						//Find .dll
+						j = namestblINT;
+						fseek(infile, j, SEEK_SET);
+						fread(dllBUFF, sizeof(dllBUFF)+1, 1, infile); //Read buffer
+						for(j = 0; j <= MAX_PATH; j++){
+							if(dllBUFF[j] == '.' && dllBUFF[j+1] == 'd' && dllBUFF[j+2] == 'l' && dllBUFF[j+3] == 'l'){
+								namestblOFFSET = j+namestblINT+4;
+								namestblBOOL = true;
+								i = rvavsrawINT + 12;
+								i = i + 8+4;
+								fseek(infile, i, SEEK_SET);
+								fread(numfuncBuff, sizeof(numfuncBuff)+1, 1, infile);
+								numFunctions = numfuncBuff[0] | (numfuncBuff[1]<<8) | (numfuncBuff[2]<<16) | (numfuncBuff[3]<<24);
+								printf("Number of Functions: %d\n", numFunctions);
+								break;
+							}
+						}
+					}
+					i = edataOFFSET + 32;
+					fseek(infile, i, SEEK_SET);
+				}
+			
+				//.idata
+				if (cmpBUFF[0] == '.' && cmpBUFF[1] == 'i' && cmpBUFF[2] == 'd' && cmpBUFF[3] == 'a' && cmpBUFF[4] == 't' && cmpBUFF[5] == 'a'){
+					numSections++;
+					idataOFFSET = i;
+					printf(".idata offset: 0x%x\n", i);
+					i = i + 12;
+					fseek(infile, i, SEEK_SET);
+					fread(rvaBUFF, sizeof(rvaBUFF)+1, 1,infile);
+					rvaINT = rvaBUFF[0] | (rvaBUFF[1]<<8) | (rvaBUFF[2]<<16) | (rvaBUFF[3]<<24);
+					printf("RVA: 0x%02x%02x%02x%02x\n", rvaBUFF[3], rvaBUFF[2], rvaBUFF[1], rvaBUFF[0]);
+					i = i + 8;
+					fseek(infile, i, SEEK_SET);
+					fread(rawdataBUFF, sizeof(rawdataBUFF)+1, 1,infile);
+					rawdataINT = rawdataBUFF[0] | (rawdataBUFF[1]<<8) | (rawdataBUFF[2]<<16) | (rawdataBUFF[3]<<24);
+					printf("Raw Data Ptr: 0x%02x%02x%02x%02x\n", rawdataBUFF[3], rawdataBUFF[2], rawdataBUFF[1], rawdataBUFF[0]);
+					rvaOFFSET = rvaINT - rawdataINT;
+					printf("RVA vs RAW: 0x%x\n", rvaOFFSET);
+					rvavsrawINT = exptblINT - rvaOFFSET;
+					i = rvavsrawINT +  12;
+					fseek(infile, i, SEEK_SET);
+					fread(namervatblBUFF, sizeof(namervatblBUFF)+1, 1,infile);
+					namervaINT = namervatblBUFF[0] | (namervatblBUFF[1]<<8) | (namervatblBUFF[2]<<16) | (namervatblBUFF[3]<<24);
+					namestblINT = namervaINT - rvaOFFSET;
+					if(namestblINT < 0 || namestblINT > fileSize){
+					}
+					else{
+						//Find .dll
+						j = namestblINT;
+						fseek(infile, j, SEEK_SET);
+						fread(dllBUFF, sizeof(dllBUFF)+1, 1, infile); //Read buffer
+						for(j = 0; j <= MAX_PATH; j++){
+							if(dllBUFF[j] == '.' && dllBUFF[j+1] == 'd' && dllBUFF[j+2] == 'l' && dllBUFF[j+3] == 'l'){
+								namestblOFFSET = j+namestblINT+4;
+								namestblBOOL = true;
+								i = rvavsrawINT + 12;
+								i = i + 8+4;
+								fseek(infile, i, SEEK_SET);
+								fread(numfuncBuff, sizeof(numfuncBuff)+1, 1, infile);
+								numFunctions = numfuncBuff[0] | (numfuncBuff[1]<<8) | (numfuncBuff[2]<<16) | (numfuncBuff[3]<<24);
+								printf("Number of Functions: %d\n", numFunctions);
+								break;
+							}
+						}
+					}
+					i = idataOFFSET + 32;
+					fseek(infile, i, SEEK_SET);
+				}
+				
+				//.CRT
+				if (cmpBUFF[0] == '.' && cmpBUFF[1] == 'C' && cmpBUFF[2] == 'R' && cmpBUFF[3] == 'T'){
+					numSections++;
+					crtOFFSET = i; 
+					printf(".CRT offset: 0x%x\n", i);
+					i = i + 12;
+					fseek(infile, i, SEEK_SET);
+					fread(rvaBUFF, sizeof(rvaBUFF)+1, 1,infile);
+					rvaINT = rvaBUFF[0] | (rvaBUFF[1]<<8) | (rvaBUFF[2]<<16) | (rvaBUFF[3]<<24);
+					printf("RVA: 0x%02x%02x%02x%02x\n", rvaBUFF[3], rvaBUFF[2], rvaBUFF[1], rvaBUFF[0]);
+					i = i + 8;
+					fseek(infile, i, SEEK_SET);
+					fread(rawdataBUFF, sizeof(rawdataBUFF)+1, 1,infile);
+					rawdataINT = rawdataBUFF[0] | (rawdataBUFF[1]<<8) | (rawdataBUFF[2]<<16) | (rawdataBUFF[3]<<24);
+					printf("Raw Data Ptr: 0x%02x%02x%02x%02x\n", rawdataBUFF[3], rawdataBUFF[2], rawdataBUFF[1], rawdataBUFF[0]);
+					rvaOFFSET = rvaINT - rawdataINT;
+					printf("RVA vs RAW: 0x%x\n", rvaOFFSET);
+					rvavsrawINT = exptblINT - rvaOFFSET;
+					i = rvavsrawINT +  12;
+					fseek(infile, i, SEEK_SET);
+					fread(namervatblBUFF, sizeof(namervatblBUFF)+1, 1,infile);
+					namervaINT = namervatblBUFF[0] | (namervatblBUFF[1]<<8) | (namervatblBUFF[2]<<16) | (namervatblBUFF[3]<<24);
+					namestblINT = namervaINT - rvaOFFSET;
+					if(namestblINT < 0 || namestblINT > fileSize){
+					}
+					else{
+						//Find .dll
+						j = namestblINT;
+						fseek(infile, j, SEEK_SET);
+						fread(dllBUFF, sizeof(dllBUFF)+1, 1, infile); //Read buffer
+						for(j = 0; j <= MAX_PATH; j++){
+							if(dllBUFF[j] == '.' && dllBUFF[j+1] == 'd' && dllBUFF[j+2] == 'l' && dllBUFF[j+3] == 'l'){
+								namestblOFFSET = j+namestblINT+4;
+								namestblBOOL = true;
+								i = rvavsrawINT + 12;
+								i = i + 8+4;
+								fseek(infile, i, SEEK_SET);
+								fread(numfuncBuff, sizeof(numfuncBuff)+1, 1, infile);
+								numFunctions = numfuncBuff[0] | (numfuncBuff[1]<<8) | (numfuncBuff[2]<<16) | (numfuncBuff[3]<<24);
+								printf("Number of Functions: %d\n", numFunctions);
+								break;
+							}
+						}
+					}
+					i = crtOFFSET + 32;
+					fseek(infile, i, SEEK_SET);
+				}
+				
+				//.tls
+				if (cmpBUFF[0] == '.' && cmpBUFF[1] == 't' && cmpBUFF[2] == 'l' && cmpBUFF[3] == 's'){
+					numSections++;
+					tlsOFFSET = i;
+					printf(".tls offset: 0x%x\n", i);
+					i = i + 12;
+					fseek(infile, i, SEEK_SET);
+					fread(rvaBUFF, sizeof(rvaBUFF)+1, 1,infile);
+					rvaINT = rvaBUFF[0] | (rvaBUFF[1]<<8) | (rvaBUFF[2]<<16) | (rvaBUFF[3]<<24);
+					printf("RVA: 0x%02x%02x%02x%02x\n", rvaBUFF[3], rvaBUFF[2], rvaBUFF[1], rvaBUFF[0]);
+					i = i + 8;
+					fseek(infile, i, SEEK_SET);
+					fread(rawdataBUFF, sizeof(rawdataBUFF)+1, 1,infile);
+					rawdataINT = rawdataBUFF[0] | (rawdataBUFF[1]<<8) | (rawdataBUFF[2]<<16) | (rawdataBUFF[3]<<24);
+					printf("Raw Data Ptr: 0x%02x%02x%02x%02x\n", rawdataBUFF[3], rawdataBUFF[2], rawdataBUFF[1], rawdataBUFF[0]);
+					rvaOFFSET = rvaINT - rawdataINT;
+					printf("RVA vs RAW: 0x%x\n", rvaOFFSET);
+					rvavsrawINT = exptblINT - rvaOFFSET;
+					i = rvavsrawINT +  12;
+					fseek(infile, i, SEEK_SET);
+					fread(namervatblBUFF, sizeof(namervatblBUFF)+1, 1,infile);
+					namervaINT = namervatblBUFF[0] | (namervatblBUFF[1]<<8) | (namervatblBUFF[2]<<16) | (namervatblBUFF[3]<<24);
+					namestblINT = namervaINT - rvaOFFSET;
+					if(namestblINT < 0 || namestblINT > fileSize){
+					}
+					else{
+						//Find .dll
+						j = namestblINT;
+						fseek(infile, j, SEEK_SET);
+						fread(dllBUFF, sizeof(dllBUFF)+1, 1, infile); //Read buffer
+						for(j = 0; j <= MAX_PATH; j++){
+							if(dllBUFF[j] == '.' && dllBUFF[j+1] == 'd' && dllBUFF[j+2] == 'l' && dllBUFF[j+3] == 'l'){
+								namestblOFFSET = j+namestblINT+4;
+								namestblBOOL = true;
+								i = rvavsrawINT + 12;
+								i = i + 8+4;
+								fseek(infile, i, SEEK_SET);
+								fread(numfuncBuff, sizeof(numfuncBuff)+1, 1, infile);
+								numFunctions = numfuncBuff[0] | (numfuncBuff[1]<<8) | (numfuncBuff[2]<<16) | (numfuncBuff[3]<<24);
+								printf("Number of Functions: %d\n", numFunctions);
+								break;
+							}
+						}
+					}
+					i = tlsOFFSET + 32;
+					fseek(infile, i, SEEK_SET);
+				}
+
+				//.rsrc
+				if (cmpBUFF[0] == '.' && cmpBUFF[1] == 'r' && cmpBUFF[2] == 's' && cmpBUFF[3] == 'r' && cmpBUFF[4] == 'c'){
+					numSections++;
+					rsrcOFFSET = i;
+					printf(".rsrc offset: 0x%x\n", i);
+					i = i + 12;
+					fseek(infile, i, SEEK_SET);
+					fread(rvaBUFF, sizeof(rvaBUFF)+1, 1,infile);
+					rvaINT = rvaBUFF[0] | (rvaBUFF[1]<<8) | (rvaBUFF[2]<<16) | (rvaBUFF[3]<<24);
+					printf("RVA: 0x%02x%02x%02x%02x\n", rvaBUFF[3], rvaBUFF[2], rvaBUFF[1], rvaBUFF[0]);
+					i = i + 8;
+					fseek(infile, i, SEEK_SET);
+					fread(rawdataBUFF, sizeof(rawdataBUFF)+1, 1,infile);
+					rawdataINT = rawdataBUFF[0] | (rawdataBUFF[1]<<8) | (rawdataBUFF[2]<<16) | (rawdataBUFF[3]<<24);
+					printf("Raw Data Ptr: 0x%02x%02x%02x%02x\n", rawdataBUFF[3], rawdataBUFF[2], rawdataBUFF[1], rawdataBUFF[0]);
+					rvaOFFSET = rvaINT - rawdataINT;
+					printf("RVA vs RAW: 0x%x\n", rvaOFFSET);
+					rvavsrawINT = exptblINT - rvaOFFSET;
+					i = rvavsrawINT +  12;
+					fseek(infile, i, SEEK_SET);
+					fread(namervatblBUFF, sizeof(namervatblBUFF)+1, 1,infile);
+					namervaINT = namervatblBUFF[0] | (namervatblBUFF[1]<<8) | (namervatblBUFF[2]<<16) | (namervatblBUFF[3]<<24);
+					namestblINT = namervaINT - rvaOFFSET;
+					if(namestblINT < 0 || namestblINT > fileSize){
+					}
+					else{
+						//Find .dll
+						j = namestblINT;
+						fseek(infile, j, SEEK_SET);
+						fread(dllBUFF, sizeof(dllBUFF)+1, 1, infile); //Read buffer
+						for(j = 0; j <= MAX_PATH; j++){
+							if(dllBUFF[j] == '.' && dllBUFF[j+1] == 'd' && dllBUFF[j+2] == 'l' && dllBUFF[j+3] == 'l'){
+								namestblOFFSET = j+namestblINT+4;
+								namestblBOOL = true;
+								i = rvavsrawINT + 12;
+								i = i + 8+4;
+								fseek(infile, i, SEEK_SET);
+								fread(numfuncBuff, sizeof(numfuncBuff)+1, 1, infile);
+								numFunctions = numfuncBuff[0] | (numfuncBuff[1]<<8) | (numfuncBuff[2]<<16) | (numfuncBuff[3]<<24);
+								printf("Number of Functions: %d\n", numFunctions);
+								break;
+							}
+						}
+					}
+					i = rsrcOFFSET + 32;
+					fseek(infile, i, SEEK_SET);
+				}
+			
+				//.reloc
+				if (cmpBUFF[0] == '.' && cmpBUFF[1] == 'r' && cmpBUFF[2] == 'e' && cmpBUFF[3] == 'l' && cmpBUFF[4] == 'o' && cmpBUFF[5] == 'c'){
+					numSections++;
+					relocOFFSET = i;
+					printf(".reloc offset: 0x%x\n", i);
+					i = i + 12;
+					fseek(infile, i, SEEK_SET);
+					fread(rvaBUFF, sizeof(rvaBUFF)+1, 1,infile);
+					rvaINT = rvaBUFF[0] | (rvaBUFF[1]<<8) | (rvaBUFF[2]<<16) | (rvaBUFF[3]<<24);
+					printf("RVA: 0x%02x%02x%02x%02x\n", rvaBUFF[3], rvaBUFF[2], rvaBUFF[1], rvaBUFF[0]);
+					i = i + 8;
+					fseek(infile, i, SEEK_SET);
+					fread(rawdataBUFF, sizeof(rawdataBUFF)+1, 1,infile);
+					rawdataINT = rawdataBUFF[0] | (rawdataBUFF[1]<<8) | (rawdataBUFF[2]<<16) | (rawdataBUFF[3]<<24);
+					printf("Raw Data Ptr: 0x%02x%02x%02x%02x\n", rawdataBUFF[3], rawdataBUFF[2], rawdataBUFF[1], rawdataBUFF[0]);
+					rvaOFFSET = rvaINT - rawdataINT;
+					printf("RVA vs RAW: 0x%x\n", rvaOFFSET);
+					rvavsrawINT = exptblINT - rvaOFFSET;
+					i = rvavsrawINT +  12;
+					fseek(infile, i, SEEK_SET);
+					fread(namervatblBUFF, sizeof(namervatblBUFF)+1, 1,infile);
+					namervaINT = namervatblBUFF[0] | (namervatblBUFF[1]<<8) | (namervatblBUFF[2]<<16) | (namervatblBUFF[3]<<24);
+					namestblINT = namervaINT - rvaOFFSET;
+					if(namestblINT < 0 || namestblINT > fileSize){
+					}
+					else{
+						//Find .dll
+						j = namestblINT;
+						fseek(infile, j, SEEK_SET);
+						fread(dllBUFF, sizeof(dllBUFF)+1, 1, infile); //Read buffer
+						for(j = 0; j <= MAX_PATH; j++){
+							if(dllBUFF[j] == '.' && dllBUFF[j+1] == 'd' && dllBUFF[j+2] == 'l' && dllBUFF[j+3] == 'l'){
+								namestblOFFSET = j+namestblINT+4;
+								namestblBOOL = true;
+								i = rvavsrawINT + 12;
+								i = i + 8+4;
+								fseek(infile, i, SEEK_SET);
+								fread(numfuncBuff, sizeof(numfuncBuff)+1, 1, infile);
+								numFunctions = numfuncBuff[0] | (numfuncBuff[1]<<8) | (numfuncBuff[2]<<16) | (numfuncBuff[3]<<24);
+								printf("Number of Functions: %d\n", numFunctions);
+								break;
+							}
+						}
+					}
+					i = relocOFFSET + 32;
+					fseek(infile, i, SEEK_SET);
+				}
+		
+				if(numSections == totalSections){
 					break;
 				}
 			}
+			if(namestblBOOL == true){
+				printf("NAME TABLE OFFSET FOUND: 0x%x", namestblOFFSET);
+				if (boolList == true && boolEnum == true){
+					printf("\n");
+				}
+			}
+			if(namestblBOOL == false){
+				printf("CANNOT FIND NAME TABLE OFFSET.");
+				if (boolList == true && boolEnum == true){
+					printf("\n");
+				}
+			}
 		
-			fseek(infile, namervaOffset, SEEK_SET);
+			fseek(infile, namestblINT, SEEK_SET);
 			fread(namesdllBuff, sizeof(namesdllBuff)+1, 1, infile);
-			printf("Names Header: %s\n", namesdllBuff);
+			//printf("Names Header: %s\n", namesdllBuff);
 			for(i = 0; i <= MAX_PATH; i++){
 				if(namesdllBuff[i] == '.' && namesdllBuff[i+1] == 'd' && namesdllBuff[i+2] == 'l' && namesdllBuff[i+3] == 'l'){
-					namesOffset = i + namervaOffset + 4;
-					printf("Names Offset: 0x%x", namesOffset);
+					namesOffset = i + namestblINT + 4;
+					//printf("Names Offset: 0x%x", namesOffset);
 					break;
 				}
 			}	
@@ -353,9 +849,9 @@ int main(int argc, char *argv[]){
 	}
 	
 	if(boolList == true && boolEnum == true){
-		printf("\n");
-		for(i = namesOffset+1; i <= fileSize; i++){
-			if(i == namesOffset+1){
+		//printf("\n");
+		for(i = namestblOFFSET+1; i <= fileSize; i++){
+			if(i == namestblOFFSET+1){
 				printf("---ENUMERATED FUNCTIONS---\n");
 				printf("VA:        Function Name:\n");
 				//printf("Act Addr:  Function Name:\n");

@@ -1,22 +1,21 @@
 # badger
 The swiss army knife for windows exploit development.<br/>
 ---ABOUT---
-- Version: 2.0
-- Made By: Arc Network Security
-- Website: www.arcnetworksecurity.com
-- This application is designed to be the Swiss Army Knife of windows exploit development
-- Allowing exploit developers to think more about development than the repetitive tasks done everyday
-- To participate in this project email lilly@arcnetworksecurity.com <br/>
----WHAT'S NEW---<br/>
-- Alpha-numeric shellcode reference chart
-- RVA Table Bug Fixed
-- Supports more than one command at a time
-- Major code overhaul and cleanup from alpha
-- Optional to list all functions with --list functionality<br/>
+Version: 2.1
+Made By: Arc Network Security
+Website: www.arcnetworksecurity.com
+This application is designed to be the Swiss Army Knife of Windows exploit development
+Allowing exploit developers to think more about development than the repetitive tasks done everyday
+To participate in this project email lilly@arcnetworksecurity.com
+IMPORTANT: By using this application you indemnify and hold harmless Arc Network Security\nfor any unethical application or misuse of this software
+---WHAT'S NEW---
+- Only Supports IMAGE_EXPORT_DIRECTORY in .text Fixed
+- Now supports more than one command at a time
+- Major code clean up and overhaul from alpha version
 ---FEATURES TO COME---
-- SEH Detection and Enumeration
-- ASLR dll entropy test
 - Security Cookie or Canary Enumeration
+- ASLR dll Entropy Test
+- SEH Detection and Enumeration
 - Suggestions are welcome
 
 Examples:
@@ -24,9 +23,7 @@ Examples:
 - badger --lib library.dll function
 - badger --enable-dep or --disable-dep
 - badger --enum library.dll
-- badger --enum library.dll --list
 - badger --about
-- badger --alphanum-ref
 Descriptions:
 - --aslr-check: Shows RSP and ESP to aid in discovering ASLR best run several times, if values change ASLR is enabled.
 - --lib: Shows the function actual address when loaded into memory ASLR may change this if enabled

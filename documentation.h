@@ -13,7 +13,7 @@ void help(){
 
 void about(){
 	printf("---ABOUT BADGER---\n");
-	printf("Version: 2.0\n");
+	printf("Version: 2.1\n");
 	printf("Made By: Arc Network Security\n");
 	printf("Website: www.arcnetworksecurity.com\n");
 	printf("This application is designed to be the Swiss Army Knife of Windows exploit development\n");
@@ -21,8 +21,7 @@ void about(){
 	printf("To participate in this project email lilly@arcnetworksecurity.com\n");
 	printf("IMPORTANT: By using this application you indemnify and hold harmless Arc Network Security\nfor any unethical application or misuse of this software\n");
 	printf("---WHAT'S NEW---\n");
-	printf("- RVA Table Offset Bug Fixed\n");
-	printf("- Alpha-Numeric shellcode reference added\n");
+	printf("- Only Supports IMAGE_EXPORT_DIRECTORY in .text Fixed\n");
 	printf("- Now supports more than one command at a time\n");
 	printf("- Major code clean up and overhaul from alpha version\n");
 	printf("---FEATURES TO COME---\n");
