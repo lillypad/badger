@@ -1,34 +1,41 @@
 void help(){
-	printf("---BADGER HELP---\n");
-	printf("badger --help || -h: Shows application help\n");
-	printf("badger --aslr-check: Checks for ASLR on host machine\n");
-	printf("badger --lib library.dll function: Displays virtual address of library function\n");
-	printf("badger --enable-dep || --disable-dep: Enable or disable DEP, admin rights required\n");
-	printf("badger --enum library.dll: Get library header information (Shows if ASLR or DEP is enabled on library)\n");
-	printf("badger --enum library.dll --list: Get library header info, enumerate all functions and virtual addreses\n");
-	printf("badger --alphanum-ref: Display alpha-numeric shellcode reference\n");
-	printf("badger --about: Displays the about screen\n");
-	printf("badger --aslr-check --enum library.dll: Badger can do multiple commands at once!");
+	printf("-------------------------------------BEGIN BADGER HELP-------------------------------------\n");
+	printf("|COMMANDS:                                   DESCRIPTION:                                 |\n");
+	printf("|badger --help || -h                         Shows this help menu                         |\n");
+	printf("|badger --version || -v                      Shows program version                        |\n");
+	printf("|badger --aslr-check                         Checks for ASLR on host machine              |\n");
+	printf("|badger --lib library.dll function           Displays virtual address of library function |\n");
+	printf("|badger --enable-dep || --disable-dep        Enable or disable DEP, admin rights required |\n");
+	printf("|badger --check-security library.dll         Security Details including ASLR, DEP and SEH |\n");
+	printf("|badger --bruter library.dll function #iter  ASLR Function Entropy Bruteforcer            |\n");
+	printf("|badger --enum-func library.dll              Enumerate all functions and virtual addreses |\n");
+	printf("|badger --alpha-ref                          Display alpha-numeric shellcode reference    |\n");
+	printf("|badger --dos-header library.dll             Display the DOS Header                       |\n");
+	printf("|badger --pe-header library.dll              Display the PE Header                        |\n");
+	printf("|badger --ilcd-header library.dll            Display Image Load Config Directory Header   |\n");
+	printf("|badger --about                              Displays the about screen                    |\n");
+	printf("--------------------------------------END BADGER HELP--------------------------------------\n");
 }
 
 void about(){
 	printf("---ABOUT BADGER---\n");
-	printf("Version: 2.1\n");
-	printf("Made By: Arc Network Security\n");
-	printf("Website: www.arcnetworksecurity.com\n");
+	printf("Version: 3.0\n");
+	printf("Made By: Lilly Chalupowski\n");
 	printf("This application is designed to be the Swiss Army Knife of Windows exploit development\n");
 	printf("Allowing exploit developers to think more about development than the repetitive tasks done everyday\n");
-	printf("To participate in this project email lilly@arcnetworksecurity.com\n");
-	printf("IMPORTANT: By using this application you indemnify and hold harmless Arc Network Security\nfor any unethical application or misuse of this software\n");
+	printf("To participate in this project email lillypadgirl86@gmail.com\n");
+	printf("IMPORTANT: By using this application you indemnify and hold harmless Lilly Chalupowski\nfor any unethical application or misuse of this software\n");
 	printf("---WHAT'S NEW---\n");
-	printf("- Only Supports IMAGE_EXPORT_DIRECTORY in .text Fixed\n");
-	printf("- Now supports more than one command at a time\n");
-	printf("- Major code clean up and overhaul from alpha version\n");
+	printf("- Code Cleanup and Formatting\n");
+	printf("- PE and DOS Header Dump Support\n");
+	printf("- Image Load Config Directory dump support\n");
+	printf("- Show DEP, ASLR, and SEH and Canary Properties\n");
+	printf("- ASLR Bruter to enumerate entropy of ASLR\n");
 	printf("---FEATURES TO COME---\n");
-	printf("- Security Cookie or Canary Enumeration\n");
-	printf("- ASLR dll Entropy Test\n");
-	printf("- SEH Detection and Enumeration\n");
-	printf("- Suggestions are welcome");
+	printf("- x64 support\n");
+	printf("- Dump ROP Gadgets\n");
+	printf("- x64 AlphaNumeric Shellcode Reference\n");
+	printf("- Suggestions are welcome\n");
 }
 
 void alphaNumericRef(){
@@ -155,9 +162,8 @@ void alphaNumericRef(){
 	printf("| = 7c = jl loc_[arg]\n");
 	printf("} = 7d = jge loc_[arg]\n");
 	printf("~ = 7e = jle loc_[arg]\n");
-	printf("\n");
 	printf("//==========================================================//\n");
-	printf("//=================BY: ARC NETWORK SECURITY=================//\n");
-	printf("//================www.arcnetworksecurity.com================//\n");
-	printf("//==========================================================//");
+	printf("//====================BY: Lilly Chalupowski=================//\n");
+	printf("//==========================================================//\n");
+	printf("//==========================================================//\n");
 }

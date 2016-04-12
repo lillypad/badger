@@ -1,21 +1,20 @@
 # badger
 The swiss army knife for windows exploit development.<br/>
 ---ABOUT---
-Version: 2.1<br/>
-Made By: Arc Network Security<br/>
-Website: www.arcnetworksecurity.com<br/>
+Version: 3.0<br/>
+Made By: Lilly Chalupowski<br/>
 This application is designed to be the Swiss Army Knife of Windows exploit development<br/>
 Allowing exploit developers to think more about development than the repetitive tasks done everyday<br/>
 To participate in this project email lilly@arcnetworksecurity.com<br/>
 IMPORTANT: By using this application you indemnify and hold harmless Arc Network Security\nfor any unethical application or misuse of this software<br/>
 ---WHAT'S NEW---
-- Only Supports IMAGE_EXPORT_DIRECTORY in .text Fixed
-- Now supports more than one command at a time
+- Now Using Structs for Easy to Read Code
+- Includes ASLR Bruter
 - Major code clean up and overhaul from alpha version<br/>
 ---FEATURES TO COME---
-- Security Cookie or Canary Enumeration
-- ASLR dll Entropy Test
-- SEH Detection and Enumeration
+- ROP Gadget Dumps
+- x64 Support
+- x64 AlphaNumeric Shellcode Reference
 - Suggestions are welcome
 
 Examples:
